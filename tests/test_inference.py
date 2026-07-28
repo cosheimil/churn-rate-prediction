@@ -43,7 +43,7 @@ class TestPreprocessorReuse:
 
 
 class TestInference:
-    def test_inference_script_runs(self):
+    def test_inference_script_runs_and_produces_output(self):
         import subprocess
         import sys
 
@@ -56,7 +56,6 @@ class TestInference:
         assert result.returncode == 0, f"Inference failed: {result.stderr}"
         assert "predictions" in result.stdout.lower()
 
-    def test_predictions_output_exists(self):
         output_path = PROJECT_ROOT / "inference" / "predictions.csv"
         assert output_path.exists()
         df = pd.read_csv(output_path)

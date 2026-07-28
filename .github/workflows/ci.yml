@@ -17,10 +17,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          pip install --upgrade pip
-          python -m pip install pandas numpy scikit-learn lightgbm xgboost statsmodels joblib mlflow optuna pytest pytest-cov fastapi uvicorn requests
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends libgomp1
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install pandas numpy scikit-learn lightgbm xgboost statsmodels joblib cloudpickle mlflow optuna shap pytest pytest-cov fastapi uvicorn pydantic requests
 
       - name: Generate dataset
         run: python data/generate_dataset.py

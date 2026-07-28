@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 
 np.random.seed(42)
 N = 7043
@@ -109,6 +110,7 @@ df["TotalCharges"] = total_charges
 df["Churn"] = churn
 
 output_path = "data/raw/telco_churn.csv"
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_csv(output_path, index=False)
 print(f"Saved to {output_path}")
 print(f"Columns ({len(df.columns)}): {list(df.columns)}")

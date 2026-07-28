@@ -1,7 +1,5 @@
 __pycache__/
 *.pyc
-*.pkl
-*.joblib
 data/
 training_pipeline/data/
 experiments/mlruns/
@@ -23,3 +21,4 @@ htmlcov/
 .ipynb_checkpoints/
 notebooks/
 .streamlit/
+.plans/
