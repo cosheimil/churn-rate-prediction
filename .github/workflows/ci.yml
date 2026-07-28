@@ -36,11 +36,26 @@ jobs:
       - name: Run tests with coverage
         run: python -m pytest tests/ -v --cov=. --cov-report=term-missing --tb=short
 
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: |
+            training_pipeline/models/lightgbm_best_model.pkl
+            utils/processor.pkl
+            training_pipeline/metrics/training_metrics.json
+          retention-days: 1
+
   docker:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: model-artifacts
 
       - name: Build Docker image
         run: docker build -t churn-api .
@@ -48,6 +63,15 @@ jobs:
       - name: Verify container starts
         run: |
           docker run -d --name churn-api -p 8000:8000 churn-api
-          sleep 5
-          curl -f http://localhost:8000/health || (docker logs churn-api && exit 1)
-          docker stop churn-api
+          for i in $(seq 1 15); do
+            sleep 2
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "API is healthy"
+              docker stop churn-api
+              exit 0
+            fi
+            echo "Waiting for API... attempt $i"
+          done
+          echo "API failed to start. Container logs:"
+          docker logs churn-api
+          exit 1
