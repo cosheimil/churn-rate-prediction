@@ -1,0 +1,95 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python training_pipeline/components/data_ingestion.py --input_path 
+      data/raw/telco_churn.csv --output_path training_pipeline/data/raw/data.csv
+    deps:
+    - path: data/raw/telco_churn.csv
+      hash: md5
+      md5: 81a6ef8884b1592365918614a4323c0a
+      size: 966852
+    - path: training_pipeline/components/data_ingestion.py
+      hash: md5
+      md5: cbdf55a963493feff27c70ed0470f78e
+      size: 1451
+    outs:
+    - path: training_pipeline/data/raw/data.csv
+      hash: md5
+      md5: 81a6ef8884b1592365918614a4323c0a
+      size: 966852
+  data_preprocessing:
+    cmd: python training_pipeline/components/data_preprocessing.py
+    deps:
+    - path: training_pipeline/components/data_preprocessing.py
+      hash: md5
+      md5: 30a2d8eb864f4e958e4f638f5d127674
+      size: 2532
+    - path: training_pipeline/data/raw/data.csv
+      hash: md5
+      md5: 81a6ef8884b1592365918614a4323c0a
+      size: 966852
+    - path: utils/features.py
+      hash: md5
+      md5: a76a9f1e6ba585874140346d3d743bf5
+      size: 471
+    - path: utils/utils.py
+      hash: md5
+      md5: 544c9ea2024112ad07767c25e48af706
+      size: 7378
+    outs:
+    - path: training_pipeline/data/processed/X_test.csv
+      hash: md5
+      md5: 1a1e95bd85ae8fa8d7038c69f8b50c51
+      size: 235182
+    - path: training_pipeline/data/processed/X_train.csv
+      hash: md5
+      md5: 42adb132f9551dca3bc3518f4abc6a40
+      size: 938673
+    - path: training_pipeline/data/processed/y_test.csv
+      hash: md5
+      md5: a2e39528a6e1c714cf6d1fe693469b83
+      size: 4918
+    - path: training_pipeline/data/processed/y_train.csv
+      hash: md5
+      md5: 2319afaad58d23884a51d045de657f8b
+      size: 19647
+    - path: utils/processor.pkl
+      hash: md5
+      md5: bb15a7ebeb528e3a90d6bde5ad4acc1f
+      size: 10524
+  model_training:
+    cmd: python training_pipeline/components/model_training.py
+    deps:
+    - path: training_pipeline/components/model_training.py
+      hash: md5
+      md5: 41527db2adf560b6c476a161082b3564
+      size: 6845
+    - path: training_pipeline/data/processed/X_test.csv
+      hash: md5
+      md5: 1a1e95bd85ae8fa8d7038c69f8b50c51
+      size: 235182
+    - path: training_pipeline/data/processed/X_train.csv
+      hash: md5
+      md5: 42adb132f9551dca3bc3518f4abc6a40
+      size: 938673
+    - path: training_pipeline/data/processed/y_test.csv
+      hash: md5
+      md5: a2e39528a6e1c714cf6d1fe693469b83
+      size: 4918
+    - path: training_pipeline/data/processed/y_train.csv
+      hash: md5
+      md5: 2319afaad58d23884a51d045de657f8b
+      size: 19647
+    - path: utils/features.py
+      hash: md5
+      md5: a76a9f1e6ba585874140346d3d743bf5
+      size: 471
+    outs:
+    - path: training_pipeline/metrics/training_metrics.json
+      hash: md5
+      md5: cbab16844c9b86ef1f3e5a988ae2d070
+      size: 786
+    - path: training_pipeline/models/lightgbm_best_model.pkl
+      hash: md5
+      md5: aae52edb50ecea8575af78c63195c8c0
+      size: 686407

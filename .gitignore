@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+myenv/
+*.env
+
+# Model artifacts (large binary files)
+*.pkl
+*.joblib
+!requirements.txt
+
+# Data files (except sample data)
+data/raw/*.csv
+data/processed/*.csv
+training_pipeline/data/**
+!training_pipeline/data/raw/.gitkeep
+!training_pipeline/data/processed/.gitkeep
+
+# MLflow
+experiments/mlruns/
+mlruns/
+
+# DVC
+.dvc/cache/
+*.dvc/tmp
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment
+.env
+.env.local
+
+# Docker
+docker/.env
+
+# Coverage
+.coverage
+htmlcov/
+.coverage.*
+*.cover
+
+# Logs
+*.log
+logs/
+
+# Streamlit
+.streamlit/secrets.toml

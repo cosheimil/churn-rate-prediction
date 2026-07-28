@@ -1,0 +1,48 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          python -m pip install pandas numpy scikit-learn lightgbm xgboost statsmodels joblib mlflow optuna pytest pytest-cov fastapi uvicorn requests
+
+      - name: Generate dataset
+        run: python data/generate_dataset.py
+
+      - name: Run pipeline
+        run: python training_pipeline/pipelines/pipeline.py
+
+      - name: Run tests with coverage
+        run: python -m pytest tests/ -v --cov=. --cov-report=term-missing --tb=short
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t churn-api .
+
+      - name: Verify container starts
+        run: |
+          docker run -d --name churn-api -p 8000:8000 churn-api
+          sleep 5
+          curl -f http://localhost:8000/health || (docker logs churn-api && exit 1)
+          docker stop churn-api

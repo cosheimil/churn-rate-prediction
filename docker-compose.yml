@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_ALLOW_FILE_STORE=true
+      - MLFLOW_TRACKING_URI=file:///app/experiments/mlruns
+      - MODEL_URI=models:/LeadScoringService/latest
+    volumes:
+      - ./experiments/mlruns:/app/experiments/mlruns
+      - ./utils/processor.pkl:/app/utils/processor.pkl
+      - ./training_pipeline/models:/app/training_pipeline/models
+      - ./deployment_package/artifacts:/app/deployment_package/artifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  mlruns:

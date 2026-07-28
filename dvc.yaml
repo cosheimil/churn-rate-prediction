@@ -1,0 +1,37 @@
+stages:
+  data_ingestion:
+    cmd: python training_pipeline/components/data_ingestion.py --input_path data/raw/telco_churn.csv --output_path training_pipeline/data/raw/data.csv
+    deps:
+      - data/raw/telco_churn.csv
+      - training_pipeline/components/data_ingestion.py
+    outs:
+      - training_pipeline/data/raw/data.csv
+
+  data_preprocessing:
+    cmd: python training_pipeline/components/data_preprocessing.py
+    deps:
+      - training_pipeline/data/raw/data.csv
+      - training_pipeline/components/data_preprocessing.py
+      - utils/features.py
+      - utils/utils.py
+    outs:
+      - training_pipeline/data/processed/X_train.csv
+      - training_pipeline/data/processed/X_test.csv
+      - training_pipeline/data/processed/y_train.csv
+      - training_pipeline/data/processed/y_test.csv
+      - utils/processor.pkl
+
+  model_training:
+    cmd: python training_pipeline/components/model_training.py
+    deps:
+      - training_pipeline/data/processed/X_train.csv
+      - training_pipeline/data/processed/X_test.csv
+      - training_pipeline/data/processed/y_train.csv
+      - training_pipeline/data/processed/y_test.csv
+      - training_pipeline/components/model_training.py
+      - utils/features.py
+    metrics:
+      - training_pipeline/metrics/training_metrics.json:
+          cache: false
+    outs:
+      - training_pipeline/models/lightgbm_best_model.pkl

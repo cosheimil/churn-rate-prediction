@@ -1,0 +1,26 @@
+{
+  "experiment_id": "709213339741699859",
+  "run_id": "8decb1bf6bb04e9ca009f1603e232bb4",
+  "params": {
+    "random_state": 42,
+    "verbosity": -1,
+    "n_estimators": 200,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "num_leaves": 31,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8
+  },
+  "train_f1_No": 0.8052170928436588,
+  "train_f1_Yes": 0.7913986399558904,
+  "train_precision_No": 0.8001364256480218,
+  "train_precision_Yes": 0.7968171724648409,
+  "train_recall_No": 0.8103626943005181,
+  "train_recall_Yes": 0.7860533041255933,
+  "test_f1_No": 0.6453407510431154,
+  "test_f1_Yes": 0.6304347826086957,
+  "test_precision_No": 0.6498599439775911,
+  "test_precision_Yes": 0.6258992805755396,
+  "test_recall_No": 0.6408839779005525,
+  "test_recall_Yes": 0.635036496350365
+}

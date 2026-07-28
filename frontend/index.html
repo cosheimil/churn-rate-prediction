@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telco Churn Prediction</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    header { text-align: center; margin-bottom: 2rem; }
+    header h1 { font-size: 2rem; font-weight: 800; color: #fff; }
+    header p { color: #a0aec0; margin-top: .4rem; font-size: .95rem; }
+    .card {
+      background: #1a2332;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.3);
+      padding: 1.5rem 2rem;
+      max-width: 960px;
+      margin: 0 auto 1.5rem;
+    }
+    .card h2 {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #63b3ed;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 1.2rem;
+      padding-bottom: .5rem;
+      border-bottom: 2px solid #2d3748;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .field { display: flex; flex-direction: column; gap: .35rem; }
+    .field label { font-size: .78rem; font-weight: 600; color: #a0aec0; }
+    .field input, .field select {
+      padding: .55rem .75rem;
+      border: 1.5px solid #2d3748;
+      border-radius: 8px;
+      font-size: .9rem;
+      background: #2d3748;
+      color: #e2e8f0;
+      transition: border-color .15s;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: #63b3ed;
+      background: #1a2332;
+    }
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    button {
+      padding: .7rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+    #btn-predict {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+    }
+    #btn-reset { background: #2d3748; color: #a0aec0; }
+    #btn-clear-history { background: #2d3748; color: #fc8181; font-size: .8rem; padding: .4rem 1rem; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #result-card { display: none; }
+    .result-body {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .verdict {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .3rem;
+    }
+    .verdict-icon { font-size: 3rem; }
+    .verdict-label { font-size: 1.1rem; font-weight: 700; }
+    .verdict-label.positive { color: #48bb78; }
+    .verdict-label.negative { color: #fc8181; }
+    .prob-bars { flex: 1; min-width: 200px; }
+    .prob-row { margin-bottom: .75rem; }
+    .prob-row .prob-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .82rem;
+      font-weight: 600;
+      color: #a0aec0;
+      margin-bottom: .3rem;
+    }
+    .bar-track {
+      height: 10px;
+      background: #2d3748;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .6s ease;
+    }
+    .bar-fill.yes { background: linear-gradient(90deg, #fc8181, #e53e3e); }
+    .bar-fill.no  { background: linear-gradient(90deg, #48bb78, #38a169); }
+    #error-msg {
+      display: none;
+      background: #2d1f1f;
+      border: 1.5px solid #742a2a;
+      color: #fc8181;
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      font-size: .9rem;
+      max-width: 960px;
+      margin: 0 auto 1rem;
+    }
+    #spinner {
+      display: none;
+      text-align: center;
+      color: #a0aec0;
+      font-size: .9rem;
+      margin-bottom: 1rem;
+    }
+    .history-section { margin-top: 1rem; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+    .history-header h3 { color: #63b3ed; font-size: .85rem; text-transform: uppercase; }
+    .history-list { max-height: 300px; overflow-y: auto; }
+    .history-item {
+      background: #2d3748;
+      border-radius: 8px;
+      padding: .6rem 1rem;
+      margin-bottom: .4rem;
+      font-size: .82rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-item.churn { border-left: 4px solid #fc8181; }
+    .history-item.stay { border-left: 4px solid #48bb78; }
+    .history-prob { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Telco Customer Churn Prediction</h1>
+  <p>Predict whether a customer will churn based on their profile and service usage.</p>
+</header>
+
+<!-- Demographics -->
+<div class="card">
+  <h2>Customer Demographics</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="customerID">Customer ID</label>
+      <input id="customerID" type="text" value="NEW-001" />
+    </div>
+    <div class="field">
+      <label for="gender">Gender</label>
+      <select id="gender"><option>Male</option><option>Female</option></select>
+    </div>
+    <div class="field">
+      <label for="SeniorCitizen">Senior Citizen</label>
+      <select id="SeniorCitizen"><option value="0">No</option><option value="1">Yes</option></select>
+    </div>
+    <div class="field">
+      <label for="Partner">Partner</label>
+      <select id="Partner"><option>No</option><option>Yes</option></select>
+    </div>
+    <div class="field">
+      <label for="Dependents">Dependents</label>
+      <select id="Dependents"><option>No</option><option>Yes</option></select>
+    </div>
+    <div class="field">
+      <label for="tenure">Tenure (months)</label>
+      <input id="tenure" type="number" value="12" min="0" max="72" />
+    </div>
+  </div>
+</div>
+
+<!-- Services -->
+<div class="card">
+  <h2>Services</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="PhoneService">Phone Service</label>
+      <select id="PhoneService"><option>Yes</option><option>No</option></select>
+    </div>
+    <div class="field">
+      <label for="MultipleLines">Multiple Lines</label>
+      <select id="MultipleLines"><option>No</option><option>Yes</option><option>No phone service</option></select>
+    </div>
+    <div class="field">
+      <label for="InternetService">Internet Service</label>
+      <select id="InternetService"><option>DSL</option><option>Fiber optic</option><option>No</option></select>
+    </div>
+    <div class="field">
+      <label for="OnlineSecurity">Online Security</label>
+      <select id="OnlineSecurity"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+    <div class="field">
+      <label for="OnlineBackup">Online Backup</label>
+      <select id="OnlineBackup"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+    <div class="field">
+      <label for="DeviceProtection">Device Protection</label>
+      <select id="DeviceProtection"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+    <div class="field">
+      <label for="TechSupport">Tech Support</label>
+      <select id="TechSupport"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+    <div class="field">
+      <label for="StreamingTV">Streaming TV</label>
+      <select id="StreamingTV"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+    <div class="field">
+      <label for="StreamingMovies">Streaming Movies</label>
+      <select id="StreamingMovies"><option>No</option><option>Yes</option><option>No internet service</option></select>
+    </div>
+  </div>
+</div>
+
+<!-- Billing -->
+<div class="card">
+  <h2>Billing & Contract</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="Contract">Contract</label>
+      <select id="Contract"><option>Month-to-month</option><option>One year</option><option>Two year</option></select>
+    </div>
+    <div class="field">
+      <label for="PaperlessBilling">Paperless Billing</label>
+      <select id="PaperlessBilling"><option>Yes</option><option>No</option></select>
+    </div>
+    <div class="field">
+      <label for="PaymentMethod">Payment Method</label>
+      <select id="PaymentMethod">
+        <option>Electronic check</option><option>Mailed check</option>
+        <option>Bank transfer (automatic)</option><option>Credit card (automatic)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="MonthlyCharges">Monthly Charges ($)</label>
+      <input id="MonthlyCharges" type="number" step="0.01" value="70.00" />
+    </div>
+    <div class="field">
+      <label for="TotalCharges">Total Charges ($)</label>
+      <input id="TotalCharges" type="number" step="0.01" value="840.00" />
+    </div>
+  </div>
+</div>
+
+<div class="actions">
+  <button id="btn-reset" type="button">Reset</button>
+  <button id="btn-predict" type="button">Predict Churn</button>
+</div>
+
+<br />
+<div id="spinner">Running prediction...</div>
+<div id="error-msg"></div>
+
+<!-- Result -->
+<div class="card" id="result-card">
+  <h2>Prediction Result</h2>
+  <div class="result-body">
+    <div class="verdict">
+      <div class="verdict-icon" id="verdict-icon"></div>
+      <div class="verdict-label" id="verdict-label"></div>
+    </div>
+    <div class="prob-bars">
+      <div class="prob-row">
+        <div class="prob-label">
+          <span>Churn Probability</span>
+          <span id="prob-churn-val">--</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill yes" id="bar-churn" style="width:0%"></div></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-label">
+          <span>Retention Probability</span>
+          <span id="prob-stay-val">--</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill no" id="bar-stay" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- History -->
+<div class="card">
+  <div class="history-header">
+    <h3>Prediction History</h3>
+    <button id="btn-clear-history" type="button">Clear History</button>
+  </div>
+  <div class="history-list" id="history-list">
+    <p style="color:#a0aec0;font-size:.82rem">No predictions yet.</p>
+  </div>
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:8000/predict";
+
+  const selectFields = [
+    "gender","SeniorCitizen","Partner","Dependents",
+    "PhoneService","MultipleLines","InternetService",
+    "OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport",
+    "StreamingTV","StreamingMovies","Contract","PaperlessBilling","PaymentMethod"
+  ];
+
+  const HISTORY_KEY = "churn_prediction_history";
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch(e) { return []; }
+  }
+
+  function saveHistory(item) {
+    const h = getHistory();
+    h.unshift(item);
+    if (h.length > 50) h.pop();
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+  }
+
+  function renderHistory() {
+    const list = document.getElementById("history-list");
+    const h = getHistory();
+    if (h.length === 0) {
+      list.innerHTML = '<p style="color:#a0aec0;font-size:.82rem">No predictions yet.</p>';
+      return;
+    }
+    list.innerHTML = h.map((item, i) => {
+      const cls = item.churn ? "churn" : "stay";
+      const icon = item.churn ? "&#x274C;" : "&#x2705;";
+      return `<div class="history-item ${cls}">
+        <span>${icon} <strong>${item.customerId || 'N/A'}</strong> — ${item.verdict}</span>
+        <span class="history-prob">${(item.probability * 100).toFixed(1)}%</span>
+      </div>`;
+    }).join("");
+  }
+
+  function buildRow() {
+    const row = {};
+    document.querySelectorAll("[id]").forEach(el => {
+      if (["btn-predict","btn-reset","btn-clear-history","result-card","error-msg","spinner",
+            "verdict-icon","verdict-label","prob-churn-val","prob-stay-val","bar-churn","bar-stay",
+            "history-list"].includes(el.id)) return;
+      const val = el.value.trim();
+      if (selectFields.includes(el.id)) {
+        row[el.id] = val;
+      } else if (el.id === "customerID") {
+        row[el.id] = val;
+      } else {
+        row[el.id] = isNaN(val) ? val : Number(val);
+      }
+    });
+    return row;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById("error-msg");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  function hideError() {
+    document.getElementById("error-msg").style.display = "none";
+  }
+
+  document.getElementById("btn-predict").addEventListener("click", async () => {
+    hideError();
+    document.getElementById("result-card").style.display = "none";
+    document.getElementById("spinner").style.display = "block";
+    document.getElementById("btn-predict").disabled = true;
+
+    const row = buildRow();
+    const customerId = row["customerID"];
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows: [row] })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      const data = await resp.json();
+      const result = data.predictions[0];
+
+      const isChurn = result.churn;
+      const prob = result.probability;
+      const probStay = 1 - prob;
+
+      document.getElementById("verdict-icon").textContent = isChurn ? "&#x1F6A8;" : "&#x1F389;";
+      const lbl = document.getElementById("verdict-label");
+      lbl.innerHTML = isChurn ? "High Risk: Will Churn" : "Safe: Will Stay";
+      lbl.className = "verdict-label " + (isChurn ? "negative" : "positive");
+
+      const churnPct = (prob * 100).toFixed(1) + "%";
+      const stayPct = (probStay * 100).toFixed(1) + "%";
+      document.getElementById("prob-churn-val").textContent = churnPct;
+      document.getElementById("prob-stay-val").textContent = stayPct;
+      document.getElementById("bar-churn").style.width = churnPct;
+      document.getElementById("bar-stay").style.width = stayPct;
+
+      document.getElementById("result-card").style.display = "block";
+
+      saveHistory({
+        customerId: customerId,
+        churn: isChurn,
+        probability: prob,
+        verdict: isChurn ? "Will Churn" : "Will Stay",
+        timestamp: new Date().toISOString(),
+      });
+      renderHistory();
+
+    } catch (err) {
+      showError("Error: " + err.message);
+    } finally {
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("btn-predict").disabled = false;
+    }
+  });
+
+  document.getElementById("btn-reset").addEventListener("click", () => {
+    document.querySelectorAll("select").forEach(el => (el.selectedIndex = 0));
+    document.querySelectorAll("input").forEach(el => {
+      if (el.defaultValue) el.value = el.defaultValue;
+    });
+    hideError();
+    document.getElementById("result-card").style.display = "none";
+  });
+
+  document.getElementById("btn-clear-history").addEventListener("click", () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  });
+
+  // Prevent select fields from being treated as numeric
+  if (document.getElementById("SeniorCitizen")) {
+    selectFields.push("SeniorCitizen");
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>

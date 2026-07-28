@@ -1,0 +1,3 @@
+SeniorCitizen,tenure,MonthlyCharges,TotalCharges,gender,Partner,Dependents,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,prediction,prediction_probability_0,prediction_probability_1
+0,12,70.0,840.0,Male,No,No,Yes,No,DSL,No,Yes,No,No,No,No,Month-to-month,Yes,Electronic check,Yes,0.42054583022139913,0.5794541697786009
+1,48,100.0,4800.0,Female,Yes,No,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,Yes,Two year,No,Credit card (automatic),No,0.6343628640548697,0.3656371359451302
